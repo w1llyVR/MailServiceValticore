@@ -1,13 +1,25 @@
-import { BadRequestException, Body, Controller, Get, InternalServerErrorException, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  InternalServerErrorException,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { SmtpService } from './smtp/smtp.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import * as fs from 'fs'
+import * as fs from 'fs';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService, private readonly smptService: SmtpService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly smptService: SmtpService,
+  ) {}
 
   @Get('hola')
   getHello() {
@@ -19,19 +31,30 @@ export class AppController {
     FileInterceptor('fileCv', {
       storage: diskStorage({
         destination: './uploads',
-        filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+        filename: (_, file, cb) =>
+          cb(null, `${Date.now()}-${file.originalname}`),
       }),
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File, 
-  @Body('name') name: string,
-  @Body('lastName') lastName: string,
-  @Body('email') email: string,
-  @Body('phone') phone: string,
-  @Body('date') date: string,
-  @Body('specialization') specialization: string,
-  @Body('specializationDescription') specializationDescription: string) {
-    if (!file || !name || !lastName || !email || !phone || !date || !specialization) {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('name') name: string,
+    @Body('lastName') lastName: string,
+    @Body('email') email: string,
+    @Body('phone') phone: string,
+    @Body('date') date: string,
+    @Body('specialization') specialization: string,
+    @Body('specializationDescription') specializationDescription: string,
+  ) {
+    if (
+      !file ||
+      !name ||
+      !lastName ||
+      !email ||
+      !phone ||
+      !date ||
+      !specialization
+    ) {
       throw new BadRequestException('Todos los campos son requeridos.');
     }
 
@@ -49,18 +72,21 @@ export class AppController {
     `;
 
     try {
-      await this.smptService.sendMail(recipientEmail, subject, message, file.path, file.originalname);
+      await this.smptService.sendMail(
+        recipientEmail,
+        subject,
+        message,
+        file.path,
+        file.originalname,
+      );
     } catch (error) {
-      throw new InternalServerErrorException('No se pudo enviar el correo. ' + error.message);
+      throw new InternalServerErrorException(
+        'No se pudo enviar el correo. ' + error.message,
+      );
     } finally {
-      fs.unlinkSync(file.path); 
+      fs.unlinkSync(file.path);
     }
 
-
-
-  
     return { message: 'Correo enviado exitosamente con el archivo adjunto.' };
   }
-
-
 }
