@@ -19,11 +19,90 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly smptService: SmtpService,
+
   ) {}
 
+  private recipientEmail = 'jcrevolledo@valticore.com';
+  private ccEmails = ['marsi3116@gmail.com', 'jmpaucar@valticore.com', 'willy.valentin@valticore.com', 'dfvaler@valticore.com']
+  
   @Get('hola')
   getHello() {
     return { message: 'Hola' };
+  }
+
+  @Post('cotizacion')
+  async solicitarCotizacion(
+    @Body('name') name: string,
+    @Body('company') company: string,
+    @Body('email') email: string,
+    @Body('service') service: string,
+    @Body('phone') phone: string,
+  ) {
+    if (!name || !company || !email || !service || !phone) {
+      throw new BadRequestException('Todos los campos son requeridos.' + name + company + email + service + phone); 
+    }
+
+    const subject = 'Solicitud de Cotización';
+    const message = `
+      <h2>Solicitud de Cotización</h2>
+      <p><strong>Nombre:</strong> ${name}</p>
+      <p><strong>Empresa:</strong> ${company}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Servicio de interés:</strong> ${service}</p>
+      <p><strong>Teléfono:</strong> ${phone}</p>
+      <p>Favor de atender esta solicitud.</p>
+    `;
+
+    try {
+      await this.smptService.sendMail(
+        this.recipientEmail,
+        this.ccEmails,
+        subject,
+        message,
+        '',
+        '',
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'No se pudo enviar el correo. ' + error.message,
+      );
+    }
+
+    return { message: 'Solicitud de cotización enviada exitosamente.' };
+  }
+
+  @Post('asesor')
+  async solicitarAsesor(@Body('email') email: string) {
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      throw new BadRequestException('Debe proporcionar un correo válido.');
+    }
+
+    const subject = 'Se solicita un asesor – WhatsApp';
+    const message = `
+      <h2>Solicitud de Asesor en WhatsApp</h2>
+      <p>El usuario con correo <strong>${email}</strong> está solicitando un asesor en WhatsApp.</p>
+      <p>Favor de contactar lo antes posible.</p>
+    `;
+
+    var mails = this.ccEmails;
+    mails.push('Angievalverdesalazar123@gmail.com')
+
+    try {
+      await this.smptService.sendMail(
+        this.recipientEmail,
+        mails,
+        subject,
+        message,
+        '',
+        ''
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'No se pudo enviar el correo. ' + error.message,
+      );
+    }
+
+    return { message: 'Solicitud de asesor enviada exitosamente.' };
   }
 
   @Post('upload')
@@ -58,7 +137,7 @@ export class AppController {
       throw new BadRequestException('Todos los campos son requeridos.');
     }
 
-    const recipientEmail = 'wvaleric@gmail.com, marsi3116@gmail.com,';
+
     const subject = 'Nuevo CV recibido';
     const message = `
       <h2>Nuevo CV recibido</h2>
@@ -73,7 +152,8 @@ export class AppController {
 
     try {
       await this.smptService.sendMail(
-        recipientEmail,
+        this.recipientEmail,
+        this.ccEmails,
         subject,
         message,
         file.path,

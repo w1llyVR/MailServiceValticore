@@ -56,19 +56,28 @@ export class SmtpService implements OnModuleInit {
 
   async sendMail(
     to: string,
+    cc: string[],
     subject: string,
     htmlContent: string,
     filePath: string,
     filename: string,
   ) {
-    await this.transporter.sendMail({
+
+    const mailOptions: nodemailer.SendMailOptions = {
       from: `"Valticore Mailer" <${process.env.FROM_EMAIL}>`,
       to,
+      cc,
       subject,
       html: htmlContent,
-      attachments: [{ filename, path: filePath }],
-    });
+    };
 
-    console.log(`Correo enviado a ${to} con el archivo adjunto ${filename}`);
+    if (filePath && filename) {
+      mailOptions.attachments = [{ filename, path: filePath }];
+    }
+  
+    await this.transporter.sendMail(mailOptions);
+
+
+    console.log(`Correo enviado a ${to}${filePath ? ` con el archivo adjunto ${filename}` : ''}`);
   }
 }
