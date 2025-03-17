@@ -72,15 +72,15 @@ export class AppController {
   }
 
   @Post('asesor')
-  async solicitarAsesor(@Body('email') email: string) {
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      throw new BadRequestException('Debe proporcionar un correo válido.');
+  async solicitarAsesor(@Body('phone') phone: string) {
+    if (!phone) {
+      throw new BadRequestException('Debe proporcionar un número válido.');
     }
 
     const subject = 'Se solicita un asesor – WhatsApp';
     const message = `
       <h2>Solicitud de Asesor en WhatsApp</h2>
-      <p>El usuario con correo <strong>${email}</strong> está solicitando un asesor en WhatsApp.</p>
+      <p>El usuario con número <strong>${phone}</strong> está solicitando un asesor en WhatsApp.</p>
       <p>Favor de contactar lo antes posible.</p>
     `;
 
